@@ -1,0 +1,15 @@
+{
+  "short_name": "casspwa",
+  "name": "casspwa",
+  "icons": [
+    {
+      "src":"images/angry-square.jpg",
+      "sizes": "128x128",
+      "type": "image/jpg"
+    }
+  ],
+  "start_url": "/utm_source=homescreen",
+  "background_color": "#87CEEB",
+  "theme_color": "#87CEEB",
+  "display": "standalone"
+}
