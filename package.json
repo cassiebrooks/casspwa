@@ -1,0 +1,16 @@
+{
+  "name": "pwa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "scripts": {
+    "sw": "sw-precache --config=js/precache.js --verbose",
+    "deploy": "gh-pages -d ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "gh-pages": "^1.1.0",
+    "sw-precache": "^5.2.1"
+  }
+}
