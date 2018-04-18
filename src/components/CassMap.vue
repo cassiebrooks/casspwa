@@ -1,12 +1,5 @@
 <template>
   <div class="map-wrapper">
-    <label>
-      <gmap-autocomplete
-        selectFirstOnEnter
-        @place_changed="displayPlace"
-      />
-    </label>
-
     <gmap-map
       class="map"
       :center="{ lat: 48, lng: 2 }"
@@ -20,7 +13,6 @@
       <gmap-marker v-if="currentPlace"
         key="current-place"
         :position="currentPlace.position"
-        :icon="currentPlaceIcon"
       />
 
       <gmap-info-window v-if="infoWindowOpen"
@@ -35,7 +27,7 @@
         <div class="iw-body">
         </div>
         <div class="iw-footer">
-          <button @click="persistPlace(currentPlace)">Persist place</button>
+          <button @click="persistPlace(currentPlace)">Add to map</button>
         </div>
       </gmap-info-window>
     </gmap-map>
@@ -43,42 +35,51 @@
 </template>
 
 <script>
+import { get } from 'lodash/object';
+
 export default {
   name: 'CassMap',
   methods: {
     getLatLng(place) {
-      console.log(place);
       return place ? {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng(),
       } : null;
     },
-    displayPlace(place) {
-      console.log(place);
-      console.log('displaying place!');
+    persistPlace(place) {
+      console.log(JSON.stringify(place, null, 2));
       place.position = this.getLatLng(place);
-      this.currentPlace = place;
-      this.infoWindowPos = place.position;
-      this.infoWindowContent = place.name;
-      this.infoWindowOpen = true;
+      this.$store.commit('addPlaceToActiveMap', place);
     },
     hidePlace() {
-      console.log('hide place');
       this.infoWindowOpen = false;
       this.infoWindowPos = null;
-      this.infoWindowContent = '';
-      this.currentPlace = null;
+      this.infoWindowContent = null;
+      this.$store.commit('setCurrentPlace', null);
     },
-    persistPlace(place) {
-      console.log(place);
-      place.position = this.getLatLng(place);
-      this.markers.push(place);
+  },
+  computed: {
+    markers() {
+      return get(this.$store.getters.activeMap, 'places', []);
+    },
+    currentPlace() {
+      const cp = this.$store.getters.currentPlace;
+      if (cp) {
+        console.log(`Found the new current place (${cp.name})`);
+        console.log(cp.position);
+        this.infoWindowPos = cp.position;
+        this.infoWindowContent = cp.name;
+        this.infoWindowOpen = true;
+      } else {
+        this.infoWindowOpen = false;
+        this.infoWindowPos = null;
+        this.infoWindowContent = null;
+      }
+      return cp;
     },
   },
   data() {
     return {
-      markers: [],
-      currentPlace: null,
       infoWindowPos: null,
       infoWindowContent: '',
       infoWindowOpen: false,
@@ -87,12 +88,6 @@ export default {
           width: 0,
           height: -35,
         },
-      },
-      currentPlaceIcon: {
-        url: 'https://cdn2.iconfinder.com/data/icons/toolbar-signs-2/512/map_marker_base-128.png',
-        size: { width: 20, height: 32, f: 'px', b: 'p' },
-        anchor: { x: 0, y: 0 },
-        origin: { x: 0, y: 0 },
       },
     };
   },
