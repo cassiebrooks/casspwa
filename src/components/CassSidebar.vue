@@ -52,17 +52,10 @@ export default {
     },
   },
   methods: {
-    // getLatLng(place) {
-    //   return place ? {
-    //     lat: place.geometry.location.lat(),
-    //     lng: place.geometry.location.lng(),
-    //   } : null;
-    // },
     setActiveMap(id) {
       if (this.activeMapId !== id) this.$store.commit('setActiveMapId', id);
     },
     displayPlace(place) {
-      console.log('FROM SIDEBAR COMPONENT!');
       console.log(JSON.stringify(place, null, 2));;
       this.$store.commit('setCurrentPlace', place);
     },

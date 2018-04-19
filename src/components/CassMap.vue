@@ -1,6 +1,8 @@
 <template>
   <div class="map-wrapper">
-    <div class="map" id="cassmap"></div>
+    <div class="map" id="cassmap">
+      <div v-if="currentPlace" class="current-place">{{ currentPlace.address.label }}</div>
+    </div>
   </div>
 </template>
 
@@ -12,14 +14,7 @@ import config from '@/config';
 export default {
   name: 'CassMap',
   methods: {
-    getLatLng(place) {
-      return place ? {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-      } : null;
-    },
-    persistPlace(place) {
-      place.position = this.getLatLng(place);
+    addPlaceToMap(place) {
       this.$store.commit('addPlaceToActiveMap', place);
     },
     hidePlace() {
@@ -28,46 +23,12 @@ export default {
     setCurrentPlace(place) {
       this.$store.commit('setCurrentPlace', place);
     },
-
-    autocompleteUrl(query) {
-      return `http://autocomplete.geocoder.cit.api.here.com/6.2/suggest.json
-        ?app_id=${config.HERE_APP_ID}
-        &app_code=${config.HERE_APP_CODE}
-        &query=${query}
-        &beginHighlight=<b>
-        &endHighlight=</b>`;
-    },
-    geocoderUrl(query) {
-      return `https://geocoder.cit.api.here.com/6.2/geocode.json
-        ?searchtext=${query}
-        &app_id=${config.HERE_APP_ID}
-        &app_code=${config.HERE_APP_CODE}
-        &gen=8`;
-    },
     reverseGeocoderUrl(prox) {
       return `https://reverse.geocoder.cit.api.here.com/6.2/reversegeocode.json
         ?mode=retrieveAddresses
         &prox=${prox}
         &app_id=${config.HERE_APP_ID}
         &app_code=${config.HERE_APP_CODE}`;
-    },
-    autocomplete(query) {
-      return new Promise((resolve, reject) => {
-        fetch(this.autocompleteUrl(query))
-          .then(res => res.json()
-            .then(res => resolve(res.Response))
-            .catch(reject)
-          ).catch(reject);
-      });
-    },
-    geocode(target) {
-      return new Promise((resolve, reject) => {
-        if (target.address !== '') {
-          this.setLoading(true);
-          fetch(this.geocoderUrl(target.address))
-          .then(response => response.json().then(res => resolve(res.Response)).catch(reject)).catch(reject);
-        }
-      });
     },
     reverseGeocode(target) {
       this.setLoading(true);
@@ -76,38 +37,21 @@ export default {
           .then(response => response.json().then(res => resolve(res.Response)).catch(reject)).catch(reject);
       });
     },
-
-
     drawMap() {
-      // this.geoJSONOptions = {
-      //   style: feature => ({
-      //     ...feature.properties.style,
-      //     color: colors.red,
-      //   }),
-      //   pointToLayer: (feature, latlng) => L.circle(latlng, feature.properties.style),
-      //   onEachFeature: (feature, layer) => {
-      //     if (feature.geometry.type === 'Point') {
-      //       layer.on('mousedown', this.startEditingCircle);
-      //       layer.on('mouseup', this.endEditingCircle);
-      //     }
-      //   },
-      // };
-
       const mapElement = this.$el.querySelector('#cassmap');
       let pos = [48.8589507, 2.2770205]; // default Paris position
       this.map = L.map(mapElement).setView(pos, this.defaultZoom);
       L.tileLayer(config.LEAFLET_TILE_URL, this.tileParams).addTo(this.map);
 
-      // navigator.geolocation.getCurrentPosition((position) => {
-      //   pos = [position.coords.latitude, position.coords.longitude];
-      //   this.map.setView(pos, this.defaultZoom);
-
-      //   this.markers.push(L.marker([t.latitude, t.longitude]));
-      //   this.markers.forEach(m => m.addTo(this.map));
-
-      // }, () => {
-      //   console.error('no geolocation found');
-      // });
+      navigator.geolocation.getCurrentPosition((position) => {
+        if (position && !this.currentPlace) {
+          pos = [position.coords.latitude, position.coords.longitude];
+          this.map.setView(pos, this.defaultZoom);
+        }
+      });
+    },
+    createNewPlacePopup(place) {
+      return `<div class="popup__header"><h3>${place.address.label}</h3></div><div class="popup__footer><button id="add-to-map-button">Add to map</button></div>`;
     },
   },
   computed: {
@@ -115,7 +59,22 @@ export default {
       return get(this.$store.getters.activeMap, 'places', []);
     },
     currentPlace() {
-      return this.$store.getters.currentPlace;
+      const cp = this.$store.getters.currentPlace;
+      if (cp) {
+        const pos = [cp.displayPosition.latitude, cp.displayPosition.longitude];
+        this.map.setView(pos, this.defaultZoom);
+        const m = L.marker(pos);
+        m.addTo(this.map);
+
+        const popup = L.DomUtil.create('div');
+        L.DomUtil.create('div', 'popup__header', popup);
+        L.DomUtil.create('div', 'popup__footer', popup);
+        document.querySelector('.popup__header').innerHTML(cp.address.label);
+        document.querySelector('.popup__footer').innerHTML('<button>Add to map</button>');
+        document.querySelector('button').addEventListener('click', () => this.addPlaceToMap);
+
+        m.bindPopup(popup).openPopup();
+      }
     },
     currentPlaceIsNew() {
       return this.$store.getters.currentPlaceIsNew;
@@ -155,6 +114,10 @@ export default {
   position: absolute;
   top: 0;
   z-index: -5;
+}
+
+.current-place {
+  display: none;
 }
 
 .map {

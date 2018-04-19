@@ -2,9 +2,6 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import router from './router';
 
-import europeMock from '@/mocks/europe-places.mock';
-import asiaMock from '@/mocks/asia-places.mock';
-
 Vue.use(Vuex);
 
 const store = {
@@ -17,14 +14,14 @@ const store = {
         name: 'Europe map',
         dateCreated: '',
         dateUpdated: '',
-        places: europeMock,
+        places: [],
       },
       {
         id: '2',
         name: 'Asia map',
         dateCreated: '',
         dateUpdated: '',
-        places: asiaMock,
+        places: [],
       },
     ],
   },
@@ -35,7 +32,10 @@ const store = {
       state.currentPlace = null;
     },
     addPlaceToActiveMap: (state, place) => state.maps.find(map => map.id === state.activeMapId).places.push(place),
-    setCurrentPlace: (state, place) => state.currentPlace = place,
+    setCurrentPlace: (state, place) => {
+      console.log('IN setCurrentPlace FROM STORE', place);
+      state.currentPlace = place;
+    },
     // setMap: (state, map) => {
     //   const index = state.maps.findIndex(m => m.id === map.id);
     //   if (index >= 0) state.maps.index = map;
