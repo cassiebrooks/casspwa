@@ -30,12 +30,12 @@ const store = {
   },
   actions: {},
   mutations: {
-    setActiveMapId: (state, id) => state.activeMapId = id,
-    addPlaceToActiveMap: (state, place) => state.maps.find(map => map.id === state.activeMapId).places.push(place),
-    setCurrentPlace: (state, place) => {
-      state.currentPlace = place;
-      console.log(`changed current place to ${place.name}!`);
+    setActiveMapId: (state, id) => {
+      state.activeMapId = id;
+      state.currentPlace = null;
     },
+    addPlaceToActiveMap: (state, place) => state.maps.find(map => map.id === state.activeMapId).places.push(place),
+    setCurrentPlace: (state, place) => state.currentPlace = place,
     // setMap: (state, map) => {
     //   const index = state.maps.findIndex(m => m.id === map.id);
     //   if (index >= 0) state.maps.index = map;
@@ -47,6 +47,10 @@ const store = {
     activeMapId: state => state.activeMapId,
     activeMap: state => state.maps.find(map => map.id === state.activeMapId),
     currentPlace: state => state.currentPlace,
+    currentPlaceIsNew: (state) => {
+      const activeMap = state.maps.find(map => map.id === state.activeMapId);
+      return !activeMap || !state.currentPlace || !activeMap.places.find(p => p.id === state.currentPlace.id);
+    },
   },
 };
 

@@ -12,15 +12,15 @@
         <h2>{{ map.name }}</h2>
 
         <template v-if="activeMapId === map.id">
-          <label class="map-search">
-            <gmap-autocomplete
-              selectFirstOnEnter
-              @place_changed="displayPlace"
-            />
-          </label>
+          <cass-map-search @place="displayPlace" />
 
           <ul>
-            <li v-for="(place, index) in map.places" :key="index" class="map-entry">
+            <li v-for="(place, index) in map.places"
+              :key="index"
+              class="map-entry"
+              :class="{ active: currentPlaceId === place.id }"
+              @click="displayPlace(place)"
+            >
               {{ place.name }}
             </li>
           </ul>
@@ -31,8 +31,15 @@
 </template>
 
 <script>
+import config from '@/config';
+import { get } from 'lodash/object';
+import CassMapSearch from '@/components/CassMapSearch';
+
 export default {
   name: 'CassSidebar',
+  components: {
+    CassMapSearch,
+  },
   computed: {
     maps() {
       return this.$store.getters.maps;
@@ -40,19 +47,23 @@ export default {
     activeMapId() {
       return this.$store.getters.activeMapId;
     },
+    currentPlaceId() {
+      return get(this.$store.getters.currentPlace, 'id');
+    },
   },
   methods: {
-    getLatLng(place) {
-      return place ? {
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-      } : null;
-    },
+    // getLatLng(place) {
+    //   return place ? {
+    //     lat: place.geometry.location.lat(),
+    //     lng: place.geometry.location.lng(),
+    //   } : null;
+    // },
     setActiveMap(id) {
       if (this.activeMapId !== id) this.$store.commit('setActiveMapId', id);
     },
     displayPlace(place) {
-      place.position = this.getLatLng(place);
+      console.log('FROM SIDEBAR COMPONENT!');
+      console.log(JSON.stringify(place, null, 2));;
       this.$store.commit('setCurrentPlace', place);
     },
   },
@@ -60,41 +71,42 @@ export default {
 </script>
 
 <style lang="scss">
+@import '~@/css/variables';
+@import '~@/css/mixins';
+
 .sidebar {
   width: 300px;
-  background-color: white;
-  border: 1px solid lightgray;
-  margin: 10px;
+  background-color: $white;
+  border: 1px solid $grey-light;
+  margin: $space;
+  position: absolute;
+  @include shadow(1);
 
   h1 {
-    margin: 10px;
+    margin: $space;
   }
 
   .map-list {
-    border-top: 1px solid lightgray;
+    border-top: 1px solid $grey;
+
     .map-list__item {
-      border-bottom: 1px solid lightgray;
-      padding: 10px;
+      border-bottom: 1px solid $grey;
+      padding: $space;
       cursor: pointer;
       &:hover {
-        background-color: #f2f2f2;
+        background-color: $grey-light;
       }
       &.active {
-        background-color: #f2f2f2;
+        background-color: $grey-light;
       }
     }
   }
 
-  .map-search input {
-    margin: 10px 0;
-    padding: 5px;
-    width: 100%;
-  }
-
   .map-entry {
-    background-color: white;
-    padding: 5px;
-    margin-bottom: 10px;
+    margin-bottom: $space;
+    &.active {
+      color: $blue;
+    }
   }
 }
 </style>
